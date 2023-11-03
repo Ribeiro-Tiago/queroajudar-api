@@ -1,9 +1,9 @@
-export {};
+import { GenericObject } from "./";
 
 declare global {
   namespace Express {
     interface Response {
-      validationError: (errors: string[], reason?: string) => void;
+      validationError: (errors: GenericObject, reason?: string) => void;
     }
   }
 }

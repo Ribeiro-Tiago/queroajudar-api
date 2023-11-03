@@ -29,5 +29,8 @@ module.exports = {
     indent: ["error", 2],
     "object-curly-spacing": "off",
     "max-len": ["error", 120],
+    "require-jsdoc": "off",
+    "@typescript-eslint/ban-ts-comment": "off",
+    "@typescript-eslint/no-explicit-any": "off",
   },
 };
