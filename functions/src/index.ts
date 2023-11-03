@@ -7,13 +7,10 @@
  * See a full list of supported triggers at https://firebase.google.com/docs/functions
  */
 
-import {onRequest} from "firebase-functions/v2/https";
-import * as logger from "firebase-functions/logger";
+import { onRequest } from "firebase-functions/v2/https";
 
-// Start writing functions
-// https://firebase.google.com/docs/functions/typescript
+import user from "./controllers/user";
+import { applyMiddleware } from "./middleware";
 
-// export const helloWorld = onRequest((request, response) => {
-//   logger.info("Hello logs!", {structuredData: true});
-//   response.send("Hello from Firebase!");
-// });
+// USER ENDOPINTS
+export const register = onRequest({ region: "eu-west1", cors: ["*"] }, applyMiddleware(user.register));
