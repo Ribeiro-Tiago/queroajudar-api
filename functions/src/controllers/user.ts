@@ -21,7 +21,7 @@ const register: HttpsFunctionHandler = async (request, response) => {
 
     password: Joi.string()
       .required()
-      .pattern(/^(?=.*[a-z])(?=.*[A-Z])(?=.*d)[a-zA-Z\d]{8,}$/),
+      .pattern(/^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9]).{8,64}$/),
 
     email: Joi.string().email({}).required(),
 

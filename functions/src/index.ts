@@ -7,12 +7,12 @@
  * See a full list of supported triggers at https://firebase.google.com/docs/functions
  */
 
-import { onRequest } from "firebase-functions/v2/https";
+import { onRequest, HttpsOptions } from "firebase-functions/v2/https";
 
 import user from "./controllers/user";
 import { applyMiddleware } from "./middleware";
 
-const requestOptions = { region: "eu-west1", cors: ["*"] };
+const requestOptions: HttpsOptions = { region: "eu-west1", cors: "*" };
 
 // USER ENDOPINTS
 export const register = onRequest(requestOptions, applyMiddleware(user.register));
