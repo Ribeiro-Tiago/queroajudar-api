@@ -17,15 +17,30 @@ import { AuthErrorCodes } from "firebase/auth";
 
 const register: HttpsFunctionHandler = async (request, response) => {
   const { value: payload, error } = Joi.object<BaseUser>({
-    name: Joi.string().min(3).max(30).required(),
+    name: Joi.string().required().max(255).messages({
+      "string.empty": "Não pode ser vazio",
+      "string.max": "Não pode ter mais que 255 caracteres",
+    }),
 
     password: Joi.string()
       .required()
-      .pattern(/^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9]).{8,64}$/),
+      .pattern(/^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9]).{8,255}$/)
+      .messages({
+        "string.empty": "Não pode ser vazia",
+        "string.pattern.base":
+          "Tem que ser entre 8-255 caracters e conter pelo menos 1 maiúscula, 1 minúscula e 1 número",
+      }),
 
-    email: Joi.string().email({}).required(),
+    email: Joi.string().required().email({}).messages({
+      "string.empty": "Não pode ser vazio",
+      "string.max": "Não pode ter mais que 255 caracteres",
+      "string.email": "Não é um email válido",
+    }),
 
-    type: Joi.string().valid("org", "volunteer").required(),
+    type: Joi.string().required().valid("org", "volunteer").messages({
+      "string.empty": "Não pode ser vazio",
+      "any.only": 'Tem que ser "org" ou "voluntário"',
+    }),
   }).validate(request.body, { abortEarly: false, stripUnknown: true });
 
   if (error) {
@@ -44,12 +59,12 @@ const register: HttpsFunctionHandler = async (request, response) => {
     response.status(201).json(await registerUser(payload));
   } catch (err) {
     if (err?.code === AuthErrorCodes.EMAIL_EXISTS) {
-      response.validationError({ email: "já existe um utilizador com esse email" });
+      response.validationError({ email: "Este email já está a ser usado" });
       return;
     }
 
     logger.error("failed to register user", { payload, err });
-    response.status(500).json({ reason: "Something went wrong on our side" });
+    response.error();
     return;
   }
 };
@@ -82,7 +97,7 @@ const login: HttpsFunctionHandler = async (request, response) => {
     }
 
     logger.error("failed to login user", { payload, err });
-    response.status(500).json({ reason: "Something went wrong on our side" });
+    response.error();
     return;
   }
 };
