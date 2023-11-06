@@ -9,7 +9,7 @@
 
 import { onRequest, HttpsOptions } from "firebase-functions/v2/https";
 
-import user from "./controllers/user";
+import user from "./controllers/user.controller";
 import { applyMiddleware } from "./middleware";
 
 const requestOptions: HttpsOptions = { region: "eu-west1", cors: "*" };
