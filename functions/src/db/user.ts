@@ -1,6 +1,15 @@
-import { Auth, signInWithEmailAndPassword, createUserWithEmailAndPassword, getAuth, deleteUser } from "firebase/auth";
+import {
+  Auth,
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
+  getAuth,
+  deleteUser,
+  signOut,
+  AuthErrorCodes,
+} from "firebase/auth";
 import { Db, getFirebase } from "./";
 import { User, BaseUser, LoginPayload } from "../types/user";
+import { AuthError } from "../exceptions";
 
 class UserDb extends Db {
   static _collection = "users";
@@ -17,6 +26,10 @@ export const registerUser = async (user: BaseUser): Promise<User> => {
   try {
     // create user in users db with same id
     await UserDb.setDoc(authUser.user.uid, user);
+
+    // firebase auto signs in on account creation.
+    // we want user to verify email before logging in
+    signOut(auth);
   } catch (err) {
     // something went wrong creating user in users db. Delete user from auth
     await deleteUser(authUser.user);
@@ -28,6 +41,10 @@ export const registerUser = async (user: BaseUser): Promise<User> => {
 
 export const loginUser = async ({ email, password }: LoginPayload) => {
   const { user } = await signInWithEmailAndPassword(auth, email, password);
+
+  if (!user.emailVerified) {
+    throw new AuthError(AuthErrorCodes.UNVERIFIED_EMAIL, "Email ainda não foi confirmado");
+  }
 
   return { id: user.uid, ...(await UserDb.getDoc(user.uid)) };
 };

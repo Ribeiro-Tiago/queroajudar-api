@@ -9,11 +9,11 @@
 
 import Joi from "joi";
 import * as logger from "firebase-functions/logger";
+import { AuthErrorCodes } from "firebase/auth";
 
 import { loginUser, registerUser } from "../db/user";
 import { BaseUser, LoginPayload } from "../types/user";
 import { HttpsFunctionHandler } from "../types";
-import { AuthErrorCodes } from "firebase/auth";
 
 const register: HttpsFunctionHandler = async (request, response) => {
   const { value: payload, error } = Joi.object<BaseUser>({
@@ -71,11 +71,8 @@ const register: HttpsFunctionHandler = async (request, response) => {
 
 const login: HttpsFunctionHandler = async (request, response) => {
   const { value: payload, error } = Joi.object<LoginPayload>({
-    email: Joi.string().email({}).required(),
-
-    password: Joi.string()
-      .required()
-      .pattern(/^(?=.*[a-z])(?=.*[A-Z])(?=.*d)[a-zA-Z\d]{8,}$/),
+    email: Joi.string().required().messages({ "strings.empty": "Não pode ser vazio" }),
+    password: Joi.string().required().messages({ "strings.empty": "Não pode ser vazio" }),
   }).validate(request.body, { abortEarly: false, stripUnknown: true });
 
   if (error) {
@@ -89,10 +86,15 @@ const login: HttpsFunctionHandler = async (request, response) => {
   }
 
   try {
-    response.status(201).json(await loginUser(payload));
+    response.status(200).json(await loginUser(payload));
   } catch (err) {
     if (err.code === "auth/invalid-login-credentials") {
-      response.validationError({ email: "Email inválido", password: "Password inválida" });
+      response.validationError({ email: "Email inválido", password: "Palavra passe inválida" });
+      return;
+    }
+
+    if (err.code === AuthErrorCodes.UNVERIFIED_EMAIL) {
+      response.validationError({ email: "Email por confirmar" });
       return;
     }
 
