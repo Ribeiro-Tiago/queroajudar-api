@@ -10,3 +10,8 @@ export interface BaseUser {
 export interface User extends BaseUser {
   id: string;
 }
+
+export interface LoginPayload {
+  email: string;
+  password: string;
+}

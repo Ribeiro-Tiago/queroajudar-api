@@ -1,6 +1,14 @@
 // Import the functions you need from the SDKs you need
 import { FirebaseApp, initializeApp } from "firebase/app";
-import { setDoc, doc, getFirestore as _getFirestore, addDoc, collection, DocumentData } from "firebase/firestore";
+import {
+  getDoc,
+  setDoc,
+  doc,
+  getFirestore as _getFirestore,
+  addDoc,
+  collection,
+  DocumentData,
+} from "firebase/firestore";
 
 // TODO: Add SDKs for Firebase products that you want to use
 // https://firebase.google.com/docs/web/setup#available-libraries
@@ -48,6 +56,12 @@ export class Db {
 
   static async setDoc<T extends DocumentData>(id: string, payload: T) {
     return await setDoc(doc(this._db, this._collection, id), payload);
+  }
+
+  static async getDoc<T extends DocumentData>(id: string): Promise<T | null> {
+    const result = await getDoc(doc(this._db, this._collection, id));
+
+    return result.exists() ? (result.data() as T) : null;
   }
 }
 

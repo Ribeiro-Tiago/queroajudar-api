@@ -12,5 +12,8 @@ import { onRequest } from "firebase-functions/v2/https";
 import user from "./controllers/user";
 import { applyMiddleware } from "./middleware";
 
+const requestOptions = { region: "eu-west1", cors: ["*"] };
+
 // USER ENDOPINTS
-export const register = onRequest({ region: "eu-west1", cors: ["*"] }, applyMiddleware(user.register));
+export const register = onRequest(requestOptions, applyMiddleware(user.register));
+export const login = onRequest(requestOptions, applyMiddleware(user.login));

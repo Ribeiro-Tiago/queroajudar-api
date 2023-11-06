@@ -10,8 +10,8 @@
 import Joi from "joi";
 import * as logger from "firebase-functions/logger";
 
-import { registerUser } from "../db/user";
-import { BaseUser } from "../types/user";
+import { loginUser, registerUser } from "../db/user";
+import { BaseUser, LoginPayload } from "../types/user";
 import { HttpsFunctionHandler } from "../types";
 import { AuthErrorCodes } from "firebase/auth";
 
@@ -54,4 +54,37 @@ const register: HttpsFunctionHandler = async (request, response) => {
   }
 };
 
-export default { register };
+const login: HttpsFunctionHandler = async (request, response) => {
+  const { value: payload, error } = Joi.object<LoginPayload>({
+    email: Joi.string().email({}).required(),
+
+    password: Joi.string()
+      .required()
+      .pattern(/^(?=.*[a-z])(?=.*[A-Z])(?=.*d)[a-zA-Z\d]{8,}$/),
+  }).validate(request.body, { abortEarly: false, stripUnknown: true });
+
+  if (error) {
+    response.validationError(
+      error.details.reduce((result, { message, path }) => {
+        result[path[0]] = message;
+        return result;
+      }, {})
+    );
+    return;
+  }
+
+  try {
+    response.status(201).json(await loginUser(payload));
+  } catch (err) {
+    if (err.code === "auth/invalid-login-credentials") {
+      response.validationError({ email: "Email inválido", password: "Password inválida" });
+      return;
+    }
+
+    logger.error("failed to login user", { payload, err });
+    response.status(500).json({ reason: "Something went wrong on our side" });
+    return;
+  }
+};
+
+export default { register, login };
