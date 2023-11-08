@@ -7,6 +7,7 @@ import {
   signOut,
   AuthErrorCodes,
   sendEmailVerification,
+  sendPasswordResetEmail,
 } from "firebase/auth";
 import { AuthData } from "firebase-functions/lib/common/providers/https";
 
@@ -57,3 +58,7 @@ export const loginUser = async ({ email, password }: LoginPayload) => {
 };
 
 export const logoutUser = async (auth: AuthData) => signOut(_auth);
+
+export const resetUserPasswordEmail = async (email: string) => {
+  return await sendPasswordResetEmail(_auth, email);
+};

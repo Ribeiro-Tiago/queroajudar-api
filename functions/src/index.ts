@@ -17,6 +17,7 @@ const options: HttpsOptions | CallableOptions = { region: "eu-west1", cors: "*" 
 // UNAUTHED ENDOPINTS
 export const register = onRequest(options, applyMiddleware(user.register));
 export const login = onRequest(options, applyMiddleware(user.login));
+export const resetPassword = onRequest(options, applyMiddleware(user.resetPasswordEmail));
 
 // AUTHED ENDPOINTS
 export const logout = onCall(options, user.logout);

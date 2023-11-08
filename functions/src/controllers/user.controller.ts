@@ -11,7 +11,7 @@ import Joi from "joi";
 import * as logger from "firebase-functions/logger";
 import { AuthErrorCodes } from "firebase/auth";
 
-import { loginUser, registerUser, logoutUser } from "../db/user";
+import { loginUser, registerUser, logoutUser, resetUserPasswordEmail } from "../db/user";
 import { BaseUser, LoginPayload } from "../types/user";
 import { HttpsFunctionHandler, OnCallHandler } from "../types";
 
@@ -44,12 +44,7 @@ const register: HttpsFunctionHandler = async (request, response) => {
   }).validate(request.body, { abortEarly: false, stripUnknown: true });
 
   if (error) {
-    response.validationError(
-      error.details.reduce((result, { message, path }) => {
-        result[path[0]] = message;
-        return result;
-      }, {})
-    );
+    response.validationError(error);
     return;
   }
 
@@ -78,12 +73,7 @@ const login: HttpsFunctionHandler = async (request, response) => {
   }).validate(request.body, { abortEarly: false, stripUnknown: true });
 
   if (error) {
-    response.validationError(
-      error.details.reduce((result, { message, path }) => {
-        result[path[0]] = message;
-        return result;
-      }, {})
-    );
+    response.validationError(error);
     return;
   }
 
@@ -107,4 +97,22 @@ const login: HttpsFunctionHandler = async (request, response) => {
 
 const logout: OnCallHandler = async ({ auth }) => logoutUser(auth);
 
-export default { register, login, logout };
+const resetPasswordEmail: HttpsFunctionHandler = async (request, response) => {
+  const { value: payload, error } = Joi.object<LoginPayload>({
+    email: Joi.string().required().messages({ "strings.empty": "Não pode ser vazio" }),
+  }).validate(request.body, { abortEarly: false, stripUnknown: true });
+
+  if (error) {
+    response.validationError(error);
+    return;
+  }
+
+  try {
+    response.status(200).json(await resetUserPasswordEmail(payload.email));
+  } catch (err) {
+    logger.error("failed to send reset password user", { payload, err });
+    response.error();
+  }
+};
+
+export default { register, login, logout, resetPasswordEmail };
