@@ -50,3 +50,5 @@ export const loginUser = async ({ email, password }: LoginPayload) => {
 
   return { user: { id: user.uid, ...details }, token: token };
 };
+
+export const logoutUser = async () => signOut(auth);

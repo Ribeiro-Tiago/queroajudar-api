@@ -11,7 +11,7 @@ import Joi from "joi";
 import * as logger from "firebase-functions/logger";
 import { AuthErrorCodes } from "firebase/auth";
 
-import { loginUser, registerUser } from "../db/user";
+import { loginUser, registerUser, logoutUser } from "../db/user";
 import { BaseUser, LoginPayload } from "../types/user";
 import { HttpsFunctionHandler } from "../types";
 
@@ -104,4 +104,12 @@ const login: HttpsFunctionHandler = async (request, response) => {
   }
 };
 
-export default { register, login };
+const logout: HttpsFunctionHandler = async (request, response) => {
+  try {
+    response.status(200).json(await logoutUser());
+  } catch (err) {
+    response.error();
+  }
+};
+
+export default { register, login, logout };

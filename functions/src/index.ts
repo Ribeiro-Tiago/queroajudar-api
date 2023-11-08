@@ -17,3 +17,4 @@ const requestOptions: HttpsOptions = { region: "eu-west1", cors: "*" };
 // USER ENDOPINTS
 export const register = onRequest(requestOptions, applyMiddleware(user.register));
 export const login = onRequest(requestOptions, applyMiddleware(user.login));
+export const logout = onRequest(requestOptions, applyMiddleware(user.logout));
