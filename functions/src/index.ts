@@ -7,14 +7,16 @@
  * See a full list of supported triggers at https://firebase.google.com/docs/functions
  */
 
-import { onRequest, HttpsOptions } from "firebase-functions/v2/https";
+import { onCall, HttpsOptions, onRequest, CallableOptions } from "firebase-functions/v2/https";
 
 import user from "./controllers/user.controller";
 import { applyMiddleware } from "./middleware";
 
-const requestOptions: HttpsOptions = { region: "eu-west1", cors: "*" };
+const options: HttpsOptions | CallableOptions = { region: "eu-west1", cors: "*" };
 
-// USER ENDOPINTS
-export const register = onRequest(requestOptions, applyMiddleware(user.register));
-export const login = onRequest(requestOptions, applyMiddleware(user.login));
-export const logout = onRequest(requestOptions, applyMiddleware(user.logout));
+// UNAUTHED ENDOPINTS
+export const register = onRequest(options, applyMiddleware(user.register));
+export const login = onRequest(options, applyMiddleware(user.login));
+
+// AUTHED ENDPOINTS
+export const logout = onCall(options, user.logout);

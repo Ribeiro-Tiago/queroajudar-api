@@ -7,6 +7,8 @@ import {
   signOut,
   AuthErrorCodes,
 } from "firebase/auth";
+import { AuthData } from "firebase-functions/lib/common/providers/https";
+
 import { Db, getFirebase } from "./";
 import { User, BaseUser, LoginPayload } from "../types/user";
 import { AuthError } from "../exceptions";
@@ -15,11 +17,11 @@ class UserDb extends Db {
   static _collection = "users";
 }
 
-const auth: Auth = (() => getAuth(getFirebase()))();
+const _auth: Auth = (() => getAuth(getFirebase()))();
 
 export const registerUser = async (user: BaseUser): Promise<User> => {
   // create user in firebase auth
-  const authUser = await createUserWithEmailAndPassword(auth, user.email, user.password);
+  const authUser = await createUserWithEmailAndPassword(_auth, user.email, user.password);
 
   delete user.password;
 
@@ -29,7 +31,7 @@ export const registerUser = async (user: BaseUser): Promise<User> => {
 
     // firebase auto signs in on account creation.
     // we want user to verify email before logging in
-    signOut(auth);
+    signOut(_auth);
   } catch (err) {
     // something went wrong creating user in users db. Delete user from auth
     await deleteUser(authUser.user);
@@ -40,7 +42,7 @@ export const registerUser = async (user: BaseUser): Promise<User> => {
 };
 
 export const loginUser = async ({ email, password }: LoginPayload) => {
-  const { user } = await signInWithEmailAndPassword(auth, email, password);
+  const { user } = await signInWithEmailAndPassword(_auth, email, password);
 
   if (!user.emailVerified) {
     throw new AuthError(AuthErrorCodes.UNVERIFIED_EMAIL, "Email ainda não foi confirmado");
@@ -51,4 +53,4 @@ export const loginUser = async ({ email, password }: LoginPayload) => {
   return { user: { id: user.uid, ...details }, token: token };
 };
 
-export const logoutUser = async () => signOut(auth);
+export const logoutUser = async (auth: AuthData) => signOut(_auth);

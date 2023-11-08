@@ -13,7 +13,7 @@ import { AuthErrorCodes } from "firebase/auth";
 
 import { loginUser, registerUser, logoutUser } from "../db/user";
 import { BaseUser, LoginPayload } from "../types/user";
-import { HttpsFunctionHandler } from "../types";
+import { HttpsFunctionHandler, OnCallHandler } from "../types";
 
 const register: HttpsFunctionHandler = async (request, response) => {
   const { value: payload, error } = Joi.object<BaseUser>({
@@ -100,16 +100,9 @@ const login: HttpsFunctionHandler = async (request, response) => {
 
     logger.error("failed to login user", { payload, err });
     response.error();
-    return;
   }
 };
 
-const logout: HttpsFunctionHandler = async (request, response) => {
-  try {
-    response.status(200).json(await logoutUser());
-  } catch (err) {
-    response.error();
-  }
-};
+const logout: OnCallHandler = async ({ auth }) => logoutUser(auth);
 
 export default { register, login, logout };
