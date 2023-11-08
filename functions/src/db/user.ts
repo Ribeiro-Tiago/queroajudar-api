@@ -46,5 +46,7 @@ export const loginUser = async ({ email, password }: LoginPayload) => {
     throw new AuthError(AuthErrorCodes.UNVERIFIED_EMAIL, "Email ainda não foi confirmado");
   }
 
-  return { id: user.uid, ...(await UserDb.getDoc(user.uid)) };
+  const [details, token] = await Promise.all([UserDb.getDoc<User>(user.uid), user.getIdToken()]);
+
+  return { user: { id: user.uid, ...details }, token: token };
 };
