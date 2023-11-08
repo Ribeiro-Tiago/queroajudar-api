@@ -56,7 +56,9 @@ const register: HttpsFunctionHandler = async (request, response) => {
   logger.info("registering user", { payload });
 
   try {
-    response.status(201).json(await registerUser(payload));
+    const user = await registerUser(payload);
+
+    response.status(201).json(user);
   } catch (err) {
     if (err?.code === AuthErrorCodes.EMAIL_EXISTS) {
       response.validationError({ email: "Este email já está a ser usado" });
