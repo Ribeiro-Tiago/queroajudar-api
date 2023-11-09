@@ -3,7 +3,7 @@ import { Response } from "express";
 
 export type HttpsFunctionHandler = (request: Request, response: Response) => Promise<void> | void;
 
-export type OnCallHandler = <T>(request: CallableRequest<T>) => Promise<void>;
+export type OnCallHandler = <T>(request: CallableRequest<T>) => Promise<any>;
 
 // @ts-ignore
 export interface GenericObject extends object {

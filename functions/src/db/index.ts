@@ -8,6 +8,8 @@ import {
   addDoc,
   collection,
   DocumentData,
+  getDocs,
+  query,
 } from "firebase/firestore";
 
 // TODO: Add SDKs for Firebase products that you want to use
@@ -37,15 +39,6 @@ export const getFirebase = () => {
   return app;
 };
 
-// export const getFirestore = () => {
-//   if (db) {
-//     return db;
-//   }
-
-//   db = _getFirestore(getFirebase());
-//   return db;
-// };
-
 export class Db {
   static _collection = "";
   static _db = _getFirestore(getFirebase());
@@ -63,12 +56,14 @@ export class Db {
 
     return result.exists() ? (result.data() as T) : null;
   }
+
+  static async getDocs<T extends DocumentData>(): Promise<T[]> {
+    const snapshot = await getDocs(query(collection(this._db, this._collection)));
+
+    const result: T[] = [];
+
+    snapshot.forEach((doc) => result.push(doc.data() as T));
+
+    return result;
+  }
 }
-
-// export const addDocument = async <T>(collectionName: string, document: T) => {
-//   if (!document) {
-//     throw Error("foo");
-//   }
-
-//   return await addDoc(collection(getFirestore(), collectionName), document);
-// };

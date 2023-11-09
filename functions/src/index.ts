@@ -10,6 +10,7 @@
 import { onCall, HttpsOptions, onRequest, CallableOptions } from "firebase-functions/v2/https";
 
 import user from "./controllers/user.controller";
+import post from "./controllers/post.controller";
 import { applyMiddleware } from "./middleware";
 
 const options: HttpsOptions | CallableOptions = { region: "eu-west1", cors: "*" };
@@ -21,3 +22,5 @@ export const resetPassword = onRequest(options, applyMiddleware(user.resetPasswo
 
 // AUTHED ENDPOINTS
 export const logout = onCall(options, user.logout);
+// posts
+export const posts = onCall(options, post.getPosts);
