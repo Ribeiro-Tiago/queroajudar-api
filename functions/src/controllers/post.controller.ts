@@ -13,6 +13,9 @@ import { AuthErrorCodes } from "firebase/auth";
 
 import dbPosts from "../db/post";
 import { OnCallHandler } from "../types";
+import { NewPost, Post } from "../types/post";
+import { formatErrors } from "../middleware";
+import { HttpsError } from "firebase-functions/v2/https";
 
 const getPosts: OnCallHandler = async ({ auth }) => {
   // const { value: payload, error } = Joi.object<BaseUser>({
@@ -50,4 +53,43 @@ const getPosts: OnCallHandler = async ({ auth }) => {
   return await dbPosts.getPosts();
 };
 
-export default { getPosts };
+const addPost: OnCallHandler = async <Post>({ data }) => {
+  const { value: payload, error } = Joi.object<NewPost>({
+    description: Joi.string().required().max(255).messages({
+      "string.empty": "Não pode ser vazio",
+      "string.max": "Não pode ter mais que 255 caracteres",
+    }),
+    title: Joi.string().required().max(255).messages({
+      "string.empty": "Não pode ser vazio",
+      "string.max": "Não pode ter mais que 255 caracteres",
+    }),
+    // @ts-ignore
+    tags: Joi.array()
+      .items(Joi.string().valid("money", "people", "goods", "other"))
+      .required()
+      .min(1)
+      .max(4)
+      .messages({
+        "string.empty": "Não pode ser vazio",
+        "string.max": "Só pode escolher no máximo 4",
+      }),
+    locations: Joi.array().items(Joi.string()).required().min(1).messages({
+      "string.empty": "Não pode ser vazio",
+    }),
+    schedule: Joi.object().required().messages({
+      "string.empty": "Não pode ser vazio",
+    }),
+  }).validate(data, { abortEarly: false, stripUnknown: true });
+
+  if (error) {
+    throw new HttpsError(
+      "invalid-argument",
+      "Validation failed",
+      formatErrors(error)
+    );
+  }
+
+  return await dbPosts.addPost(payload);
+};
+
+export default { getPosts, addPost };
