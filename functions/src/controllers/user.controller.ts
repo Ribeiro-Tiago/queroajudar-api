@@ -11,7 +11,12 @@ import Joi from "joi";
 import * as logger from "firebase-functions/logger";
 import { AuthErrorCodes } from "firebase/auth";
 
-import { loginUser, registerUser, logoutUser, resetUserPasswordEmail } from "../db/user";
+import {
+  loginUser,
+  registerUser,
+  logoutUser,
+  resetUserPasswordEmail,
+} from "../db/user";
 import { BaseUser, LoginPayload } from "../types/user";
 import { HttpsFunctionHandler, OnCallHandler } from "../types";
 
@@ -68,8 +73,12 @@ const register: HttpsFunctionHandler = async (request, response) => {
 
 const login: HttpsFunctionHandler = async (request, response) => {
   const { value: payload, error } = Joi.object<LoginPayload>({
-    email: Joi.string().required().messages({ "strings.empty": "Não pode ser vazio" }),
-    password: Joi.string().required().messages({ "strings.empty": "Não pode ser vazio" }),
+    email: Joi.string()
+      .required()
+      .messages({ "strings.empty": "Não pode ser vazio" }),
+    password: Joi.string()
+      .required()
+      .messages({ "strings.empty": "Não pode ser vazio" }),
   }).validate(request.body, { abortEarly: false, stripUnknown: true });
 
   if (error) {
@@ -80,8 +89,18 @@ const login: HttpsFunctionHandler = async (request, response) => {
   try {
     response.status(200).json(await loginUser(payload));
   } catch (err) {
-    if (err.code === "auth/invalid-login-credentials") {
-      response.validationError({ email: "Email inválido", password: "Palavra passe inválida" });
+    console.log(err.code, err.message);
+
+    if (
+      ["auth/invalid-login-credentials", "auth/user-not-found"].includes(
+        err.code
+      )
+    ) {
+      response.validationError({
+        email: "Email inválido",
+        password: "Palavra passe inválida",
+      });
+
       return;
     }
 
@@ -95,11 +114,13 @@ const login: HttpsFunctionHandler = async (request, response) => {
   }
 };
 
-const logout: OnCallHandler = async ({ auth }) => logoutUser(auth);
+const logout: OnCallHandler = async () => logoutUser();
 
 const resetPasswordEmail: HttpsFunctionHandler = async (request, response) => {
   const { value: payload, error } = Joi.object<LoginPayload>({
-    email: Joi.string().required().messages({ "strings.empty": "Não pode ser vazio" }),
+    email: Joi.string()
+      .required()
+      .messages({ "strings.empty": "Não pode ser vazio" }),
   }).validate(request.body, { abortEarly: false, stripUnknown: true });
 
   if (error) {

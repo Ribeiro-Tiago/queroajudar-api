@@ -1,8 +1,6 @@
 import {
-  Auth,
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
-  getAuth,
   deleteUser,
   signOut,
   AuthErrorCodes,
@@ -11,7 +9,7 @@ import {
 } from "firebase/auth";
 import { AuthData } from "firebase-functions/lib/common/providers/https";
 
-import { Db, getFirebase } from "./";
+import { Db, getAuth } from "./";
 import { User, BaseUser, LoginPayload } from "../types/user";
 import { AuthError } from "../exceptions";
 
@@ -19,11 +17,14 @@ class UserDb extends Db {
   static _collection = "users";
 }
 
-const _auth: Auth = (() => getAuth(getFirebase()))();
-
 export const registerUser = async (user: BaseUser): Promise<User> => {
+  const auth = getAuth();
   // create user in firebase auth
-  const { user: authUser } = await createUserWithEmailAndPassword(_auth, user.email, user.password);
+  const { user: authUser } = await createUserWithEmailAndPassword(
+    auth,
+    user.email,
+    user.password
+  );
 
   delete user.password;
 
@@ -35,7 +36,7 @@ export const registerUser = async (user: BaseUser): Promise<User> => {
 
     // firebase auto signs in on account creation.
     // we want user to verify email before logging in
-    signOut(_auth);
+    signOut(auth);
   } catch (err) {
     // something went wrong creating user in users db. Delete user from auth
     await deleteUser(authUser);
@@ -46,19 +47,26 @@ export const registerUser = async (user: BaseUser): Promise<User> => {
 };
 
 export const loginUser = async ({ email, password }: LoginPayload) => {
-  const { user } = await signInWithEmailAndPassword(_auth, email, password);
+  const { user } = await signInWithEmailAndPassword(getAuth(), email, password);
+  console.log("nope");
 
   if (!user.emailVerified) {
-    throw new AuthError(AuthErrorCodes.UNVERIFIED_EMAIL, "Email ainda não foi confirmado");
+    throw new AuthError(
+      AuthErrorCodes.UNVERIFIED_EMAIL,
+      "Email ainda não foi confirmado"
+    );
   }
 
-  const [details, token] = await Promise.all([UserDb.getDoc<User>(user.uid), user.getIdToken()]);
+  const [details, token] = await Promise.all([
+    UserDb.getDoc<User>(user.uid),
+    user.getIdToken(),
+  ]);
 
   return { user: { id: user.uid, ...details }, token: token };
 };
 
-export const logoutUser = async (auth: AuthData) => signOut(_auth);
+export const logoutUser = async () => signOut(getAuth());
 
 export const resetUserPasswordEmail = async (email: string) => {
-  return await sendPasswordResetEmail(_auth, email);
+  return await sendPasswordResetEmail(getAuth(), email);
 };

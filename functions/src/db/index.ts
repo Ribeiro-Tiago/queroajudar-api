@@ -1,5 +1,8 @@
 // Import the functions you need from the SDKs you need
+import * as logger from "firebase-functions/logger";
+
 import { FirebaseApp, initializeApp } from "firebase/app";
+import { Auth, getAuth as _getAuth, connectAuthEmulator } from "firebase/auth";
 import {
   getDoc,
   setDoc,
@@ -10,6 +13,9 @@ import {
   DocumentData,
   getDocs,
   query,
+  limit as queryLimit,
+  QueryOrderByConstraint,
+  QueryLimitConstraint,
 } from "firebase/firestore";
 
 // TODO: Add SDKs for Firebase products that you want to use
@@ -39,6 +45,16 @@ export const getFirebase = () => {
   return app;
 };
 
+export const getAuth = (): Auth => {
+  const auth = _getAuth(getFirebase());
+
+  if (process.env.NODE_ENV === "development") {
+    connectAuthEmulator(auth, "http://127.0.0.1:9099");
+  }
+
+  return auth;
+};
+
 export class Db {
   static _collection = "";
   static _db = _getFirestore(getFirebase());
@@ -54,11 +70,23 @@ export class Db {
   static async getDoc<T extends DocumentData>(id: string): Promise<T | null> {
     const result = await getDoc(doc(this._db, this._collection, id));
 
-    return result.exists() ? (result.data() as T) : null;
+    return result.exists() ? { ...(result.data() as T), id } : null;
   }
 
-  static async getDocs<T extends DocumentData>(): Promise<T[]> {
-    const snapshot = await getDocs(query(collection(this._db, this._collection)));
+  static async getDocs<T extends DocumentData>({
+    order,
+    limit,
+  }: {
+    order?: QueryOrderByConstraint;
+    limit?: QueryLimitConstraint;
+  }): Promise<T[]> {
+    const snapshot = await getDocs(
+      query(
+        collection(this._db, this._collection),
+        order,
+        limit || queryLimit(50)
+      )
+    );
 
     const result: T[] = [];
 

@@ -21,6 +21,7 @@ export const applyMiddleware =
       errors: ValidationError | GenericObject,
       reason = "Validation error"
     ) => {
+      console.log("errrrr");
       res.status(422).json({ reason, errors: formatErrors(errors) });
     };
 

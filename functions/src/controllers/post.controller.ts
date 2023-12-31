@@ -16,6 +16,7 @@ import { OnCallHandler } from "../types";
 import { NewPost, Post } from "../types/post";
 import { formatErrors } from "../middleware";
 import { HttpsError } from "firebase-functions/v2/https";
+import { orderBy } from "firebase/firestore";
 
 const getPosts: OnCallHandler = async ({ auth }) => {
   // const { value: payload, error } = Joi.object<BaseUser>({
@@ -50,10 +51,16 @@ const getPosts: OnCallHandler = async ({ auth }) => {
   //   return;
   // }
 
-  return await dbPosts.getPosts();
+  return await dbPosts.getPosts(orderBy("createBy", "desc"));
 };
 
-const addPost: OnCallHandler = async <Post>({ data }) => {
+const addPost: OnCallHandler = async ({ auth, data }) => {
+  console.log(auth);
+  // if no auth, don't go further
+  if (!auth) {
+    throw new HttpsError("unauthenticated", "User is not authenticated");
+  }
+
   const { value: payload, error } = Joi.object<NewPost>({
     description: Joi.string().required().max(255).messages({
       "string.empty": "Não pode ser vazio",
@@ -64,7 +71,7 @@ const addPost: OnCallHandler = async <Post>({ data }) => {
       "string.max": "Não pode ter mais que 255 caracteres",
     }),
     // @ts-ignore
-    tags: Joi.array()
+    categories: Joi.array()
       .items(Joi.string().valid("money", "people", "goods", "other"))
       .required()
       .min(1)
@@ -72,9 +79,12 @@ const addPost: OnCallHandler = async <Post>({ data }) => {
       .messages({
         "string.empty": "Não pode ser vazio",
         "string.max": "Só pode escolher no máximo 4",
+        "array.min": "Tem que escolher pelo menos uma opção",
+        "array.max": "Só pode escolher no máximo 4 opções",
       }),
     locations: Joi.array().items(Joi.string()).required().min(1).messages({
       "string.empty": "Não pode ser vazio",
+      "array.min": "Tem que escolher pelo menos uma opção",
     }),
     schedule: Joi.object().required().messages({
       "string.empty": "Não pode ser vazio",
@@ -89,7 +99,12 @@ const addPost: OnCallHandler = async <Post>({ data }) => {
     );
   }
 
-  return await dbPosts.addPost(payload);
+  try {
+    return await dbPosts.addPost(payload);
+  } catch (err) {
+    logger.error("failed to create post", { payload, err });
+    throw new HttpsError("internal", "Something went wrong");
+  }
 };
 
 export default { getPosts, addPost };
